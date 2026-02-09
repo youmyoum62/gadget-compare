@@ -1,0 +1,38 @@
+name: Daily Product Data Update
+
+on:
+  schedule:
+    # Run at 4:00 AM JST (19:00 UTC previous day)
+    - cron: '0 19 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Update product data from Amazon API
+        run: npx tsx src/scripts/update-products.ts
+        env:
+          AMAZON_ACCESS_KEY: ${{ secrets.AMAZON_ACCESS_KEY }}
+          AMAZON_SECRET_KEY: ${{ secrets.AMAZON_SECRET_KEY }}
+          AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
+          AMAZON_HOST: webservices.amazon.co.jp
+          AMAZON_REGION: us-west-2
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Trigger Vercel revalidation
+        if: success()
+        run: |
+          curl -s -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" || echo "Revalidation skipped (no hook URL)"
