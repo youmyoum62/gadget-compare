@@ -1,0 +1,61 @@
+name: Daily Health Check
+
+on:
+  schedule:
+    # Run at 12:00 JST (03:00 UTC)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check Supabase connectivity
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::SUPABASE_URL or SUPABASE_ANON_KEY not configured"
+            exit 1
+          fi
+
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/")
+
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+            echo "Supabase is reachable (HTTP $STATUS)"
+          else
+            echo "::error::Supabase health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      - name: Check site availability
+        run: |
+          if [ -z "$SITE_URL" ]; then
+            echo "::warning::SITE_URL not configured, skipping site check"
+            exit 0
+          fi
+
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$SITE_URL")
+
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+            echo "Site is reachable (HTTP $STATUS)"
+          else
+            echo "::error::Site health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Health Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

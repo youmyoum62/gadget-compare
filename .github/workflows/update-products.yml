@@ -6,6 +6,10 @@ on:
     - cron: '0 19 * * *'
   workflow_dispatch: # Allow manual trigger
 
+concurrency:
+  group: product-update
+  cancel-in-progress: false
+
 jobs:
   update-products:
     runs-on: ubuntu-latest
@@ -22,7 +26,10 @@ jobs:
       - run: npm ci
 
       - name: Update product data from Amazon API
-        run: npx tsx src/scripts/update-products.ts
+        id: update
+        run: |
+          set -o pipefail
+          npx tsx src/scripts/update-products.ts 2>&1 | tee /tmp/update-output.txt
         env:
           AMAZON_ACCESS_KEY: ${{ secrets.AMAZON_ACCESS_KEY }}
           AMAZON_SECRET_KEY: ${{ secrets.AMAZON_SECRET_KEY }}
@@ -32,7 +39,58 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Product Data Update Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/update-output.txt ]; then
+            echo "<details><summary>Script Output</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 /tmp/update-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Trigger Vercel revalidation
         if: success()
         run: |
-          curl -s -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" || echo "Revalidation skipped (no hook URL)"
+          if [ -n "$DEPLOY_HOOK_URL" ]; then
+            curl -s -X POST "$DEPLOY_HOOK_URL"
+            echo "Vercel deploy hook triggered"
+          else
+            echo "Vercel deploy hook URL not configured, skipped"
+          fi
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+
+      - name: Trigger ISR revalidation via API
+        if: success()
+        run: |
+          if [ -n "$SITE_URL" ] && [ -n "$REVALIDATION_SECRET" ]; then
+            STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+              -X POST "${SITE_URL}/api/revalidate" \
+              -H "Content-Type: application/json" \
+              -d "{\"secret\": \"${REVALIDATION_SECRET}\"}")
+            echo "ISR revalidation response: $STATUS"
+          else
+            echo "ISR revalidation skipped (SITE_URL or REVALIDATION_SECRET not set)"
+          fi
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          REVALIDATION_SECRET: ${{ secrets.REVALIDATION_SECRET }}
+
+      - name: Trigger content generation workflow
+        if: success()
+        run: |
+          curl -s -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/generate-content.yml/dispatches" \
+            -d '{"ref":"${{ github.ref_name }}"}'
+          echo "Content generation workflow triggered"

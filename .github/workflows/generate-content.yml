@@ -4,7 +4,11 @@ on:
   schedule:
     # Run every Sunday at 5:00 AM JST (20:00 UTC Saturday)
     - cron: '0 20 * * 6'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Allow manual trigger (also used by chain trigger from update-products)
+
+concurrency:
+  group: content-generation
+  cancel-in-progress: false
 
 jobs:
   generate-content:
@@ -22,8 +26,29 @@ jobs:
       - run: npm ci
 
       - name: Generate AI content
-        run: npx tsx src/scripts/generate-comparisons.ts
+        id: generate
+        run: |
+          set -o pipefail
+          npx tsx src/scripts/generate-comparisons.ts 2>&1 | tee /tmp/generate-output.txt
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## AI Content Generation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/generate-output.txt ]; then
+            echo "<details><summary>Script Output</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 /tmp/generate-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
