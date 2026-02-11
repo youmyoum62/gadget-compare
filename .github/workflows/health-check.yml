@@ -13,6 +13,8 @@ jobs:
 
     steps:
       - name: Check Supabase connectivity
+        id: supabase
+        continue-on-error: true
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "::error::SUPABASE_URL or SUPABASE_ANON_KEY not configured"
@@ -35,6 +37,8 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
       - name: Check site availability
+        id: site
+        continue-on-error: true
         run: |
           if [ -z "$SITE_URL" ]; then
             echo "::warning::SITE_URL not configured, skipping site check"
@@ -57,5 +61,12 @@ jobs:
         run: |
           echo "## Health Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Supabase**: ${{ steps.supabase.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Site**: ${{ steps.site.outcome }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Run time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if any check failed
+        if: always() && (steps.supabase.outcome == 'failure' || steps.site.outcome == 'failure')
+        run: |
+          echo "::error::One or more health checks failed"
+          exit 1
