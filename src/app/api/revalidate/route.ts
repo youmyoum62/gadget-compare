@@ -2,13 +2,57 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 export async function POST(request: NextRequest) {
-  const secret = request.headers.get("x-revalidation-secret");
+  try {
+    const { searchParams } = new URL(request.url);
+    const secret = searchParams.get("secret");
+    const path = searchParams.get("path") || "/";
 
-  if (secret !== process.env.REVALIDATION_SECRET) {
-    return NextResponse.json({ error: "Invalid secret" }, { status: 401 });
+    // Check secret
+    if (secret !== process.env.REVALIDATION_SECRET) {
+      return NextResponse.json({ error: "Invalid secret" }, { status: 401 });
+    }
+
+    // Revalidate specific path or all paths
+    if (path === "all") {
+      revalidatePath("/", "layout");
+      revalidatePath("/products", "page");
+      revalidatePath("/rankings", "page");
+      revalidatePath("/search", "page");
+      revalidatePath("/categories", "page");
+
+      return NextResponse.json({
+        revalidated: true,
+        paths: ["/", "/products", "/rankings", "/search", "/categories"],
+        now: Date.now()
+      });
+    }
+
+    revalidatePath(path, "page");
+
+    return NextResponse.json({
+      revalidated: true,
+      path,
+      now: Date.now()
+    });
+  } catch (error) {
+    return NextResponse.json({
+      error: "Failed to revalidate",
+      message: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
+  }
+}
+
+// Allow GET requests for easy testing
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const secret = searchParams.get("secret");
+
+  if (!secret || secret !== process.env.REVALIDATION_SECRET) {
+    return NextResponse.json({
+      error: "Invalid secret",
+      usage: "GET /api/revalidate?secret=YOUR_SECRET&path=/products"
+    }, { status: 401 });
   }
 
-  revalidatePath("/", "layout");
-
-  return NextResponse.json({ revalidated: true, now: Date.now() });
+  return POST(request);
 }
