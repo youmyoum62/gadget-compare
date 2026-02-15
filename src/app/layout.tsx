@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { TopBar } from "@/components/layout/TopBar";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { SITE_NAME, SITE_URL, SITE_DESCRIPTION } from "@/lib/utils/constants";
 import "./globals.css";
 
@@ -25,12 +25,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="flex min-h-screen flex-col">
-        <Header />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className="flex min-h-screen flex-col bg-background antialiased">
+        <TopBar />
+        <main className="mx-auto w-full max-w-md flex-1 px-4 py-4 sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
           {children}
         </main>
-        <Footer />
+        <BottomNav />
       </body>
     </html>
   );

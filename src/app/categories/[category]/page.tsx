@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCategoryBySlug, getProductsByCategory, getActiveCategories } from "@/lib/supabase/queries";
-import { ProductCard } from "@/components/product/ProductCard";
-import { AffiliateDisclosure } from "@/components/seo/AffiliateDisclosure";
+import { RankingCard } from "@/components/product/RankingCard";
+import { PageFooter } from "@/components/layout/PageFooter";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { CATEGORY_ICONS } from "@/lib/utils/constants";
 import { JsonLd, buildBreadcrumbSchema } from "@/components/seo/JsonLd";
 import { SITE_URL } from "@/lib/utils/constants";
 
@@ -40,7 +42,15 @@ export default async function CategoryPage({
   const cat = await getCategoryBySlug(category);
   if (!cat) notFound();
 
-  const products = await getProductsByCategory(category).catch(() => []);
+  const allProducts = await getProductsByCategory(category).catch(() => []);
+  
+  // Sort by rating for ranking display
+  const products = allProducts
+    .filter((p) => p.amazon_rating != null)
+    .sort((a, b) => (b.amazon_rating ?? 0) - (a.amazon_rating ?? 0))
+    .slice(0, 10);
+
+  const icon = CATEGORY_ICONS[cat.slug] || "category";
 
   return (
     <>
@@ -52,24 +62,61 @@ export default async function CategoryPage({
         ])}
       />
 
-      <h1 className="mb-2 text-2xl font-bold text-gray-900">{cat.name}</h1>
-      {cat.description && (
-        <p className="mb-6 text-gray-600">{cat.description}</p>
-      )}
+      <div className="space-y-6 pb-8">
+        {/* Header */}
+        <header className="flex items-start gap-4">
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+            <span className="material-icons-outlined text-3xl">{icon}</span>
+          </div>
+          <div className="flex-1">
+            <h1 className="mb-2 font-display text-3xl font-bold text-foreground">
+              {cat.name}
+            </h1>
+            {cat.description && (
+              <p className="text-foreground-muted">{cat.description}</p>
+            )}
+          </div>
+        </header>
 
-      <AffiliateDisclosure variant="inline" />
+        {products.length > 0 ? (
+          <div className="space-y-6">
+            {/* Top Product - Hero */}
+            <div>
+              <div className="mb-3 px-1">
+                <h2 className="font-display text-xs font-bold uppercase tracking-widest text-foreground-muted">
+                  Top Pick
+                </h2>
+              </div>
+              <RankingCard product={products[0]} rank={1} isHero />
+            </div>
 
-      {products.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      ) : (
-        <p className="rounded-lg bg-gray-50 p-8 text-center text-gray-500">
-          このカテゴリの商品を準備中です。
-        </p>
-      )}
+            {/* Remaining Products - List */}
+            {products.length > 1 && (
+              <div>
+                <div className="mb-3 px-1">
+                  <h2 className="font-display text-xs font-bold uppercase tracking-widest text-foreground-muted">
+                    Top {products.length}
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                  {products.slice(1).map((product, i) => (
+                    <RankingCard key={product.id} product={product} rank={i + 2} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <EmptyState
+            icon={icon}
+            message="このカテゴリの商品を準備中です。"
+            actionLabel="カテゴリ一覧に戻る"
+            actionHref="/categories"
+          />
+        )}
+      </div>
+
+      <PageFooter />
     </>
   );
 }

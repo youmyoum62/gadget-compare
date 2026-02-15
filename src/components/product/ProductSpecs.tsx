@@ -11,35 +11,45 @@ export function ProductSpecs({ specs, features }: ProductSpecsProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {specEntries.length > 0 && (
         <div>
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">
+          <h3 className="mb-5 px-1 font-display text-lg font-bold text-foreground">
             主な仕様
           </h3>
-          <table className="w-full text-sm">
-            <tbody>
-              {specEntries.map(([key, value]) => (
-                <tr key={key} className="border-b border-gray-100">
-                  <td className="py-2 pr-4 font-medium text-gray-600">
-                    {key}
-                  </td>
-                  <td className="py-2 text-gray-900">{value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grid grid-cols-2 gap-4">
+            {specEntries.map(([key, value]) => (
+              <div
+                key={key}
+                className="flex flex-col rounded-xl bg-background-secondary p-4 transition-colors hover:border-border-light"
+              >
+                <span className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-foreground-muted">
+                  {key}
+                </span>
+                <span className="font-display text-sm font-semibold text-foreground">
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {features && features.length > 0 && (
         <div>
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">特徴</h3>
-          <ul className="list-inside list-disc space-y-1 text-sm text-gray-700">
+          <h3 className="mb-4 px-1 font-display text-lg font-bold text-foreground">
+            特徴
+          </h3>
+          <div className="flex flex-wrap gap-2">
             {features.map((feature, i) => (
-              <li key={i}>{feature}</li>
+              <span
+                key={i}
+                className="rounded-full bg-primary-soft px-3 py-1.5 text-xs font-medium text-primary"
+              >
+                {feature}
+              </span>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>

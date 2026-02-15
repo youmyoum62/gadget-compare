@@ -1,17 +1,69 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Outlined');
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-primary: #3B82F6;
+  --color-primary-soft: #EBF5FF;
+  --color-primary-dark: #2563EB;
+  --color-background: #ffffff;
+  --color-background-secondary: #f6f7f8;
+  --color-foreground: #1F2937;
+  --color-foreground-muted: #6B7280;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-green: #10B981;
+  --color-green-soft: #D1FAE5;
+  --color-red: #EF4444;
+  --color-red-soft: #FEE2E2;
+  --color-amber: #F59E0B;
+  --color-amber-soft: #FEF3C7;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-body);
+  padding-bottom: 5rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.score-badge {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.prose-review h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-foreground);
+}
+
+.prose-review p {
+  line-height: 1.75;
+  margin-bottom: 1.25rem;
+  color: var(--color-foreground-muted);
 }

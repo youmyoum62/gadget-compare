@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublishedComparisons } from "@/lib/supabase/queries";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 export const metadata: Metadata = {
   title: "比較記事一覧",
@@ -13,40 +14,57 @@ export default async function ComparePage() {
   const comparisons = await getPublishedComparisons().catch(() => []);
 
   return (
-    <div>
-      <h1 className="mb-2 text-2xl font-bold text-gray-900">比較記事</h1>
-      <p className="mb-6 text-gray-600">
-        カテゴリ別にガジェット製品を徹底比較
-      </p>
+    <div className="space-y-6 pb-8">
+      <header>
+        <h1 className="mb-2 font-display text-3xl font-bold text-foreground">
+          比較記事
+        </h1>
+        <p className="text-foreground-muted">
+          カテゴリ別にガジェット製品を徹底比較
+        </p>
+      </header>
 
       {comparisons.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {comparisons.map((comp) => (
             <Link
               key={comp.id}
               href={`/compare/${comp.slug}`}
-              className="block rounded-lg border border-gray-200 p-6 transition-shadow hover:shadow-md"
+              className="group block overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
             >
-              <h2 className="text-lg font-semibold text-gray-900">
-                {comp.title}
-              </h2>
-              {comp.meta_description && (
-                <p className="mt-2 text-sm text-gray-600">
-                  {comp.meta_description}
-                </p>
-              )}
-              {comp.published_at && (
-                <p className="mt-3 text-xs text-gray-400">
-                  {new Date(comp.published_at).toLocaleDateString("ja-JP")}
-                </p>
-              )}
+              <div className="p-6">
+                <div className="mb-3 flex items-start gap-2">
+                  <span className="material-icons-outlined mt-0.5 text-primary">
+                    compare_arrows
+                  </span>
+                  <h2 className="flex-1 font-display text-lg font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+                    {comp.title}
+                  </h2>
+                </div>
+                {comp.meta_description && (
+                  <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-foreground-muted">
+                    {comp.meta_description}
+                  </p>
+                )}
+                {comp.published_at && (
+                  <div className="flex items-center gap-1.5 text-xs text-foreground-muted">
+                    <span className="material-icons-outlined text-sm">event</span>
+                    <time dateTime={comp.published_at}>
+                      {new Date(comp.published_at).toLocaleDateString("ja-JP")}
+                    </time>
+                  </div>
+                )}
+              </div>
             </Link>
           ))}
         </div>
       ) : (
-        <p className="rounded-lg bg-gray-50 p-8 text-center text-gray-500">
-          比較記事を準備中です。
-        </p>
+        <EmptyState
+          icon="compare_arrows"
+          message="比較記事を準備中です。"
+          actionLabel="ホームに戻る"
+          actionHref="/"
+        />
       )}
     </div>
   );

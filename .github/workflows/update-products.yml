@@ -25,17 +25,13 @@ jobs:
 
       - run: npm ci
 
-      - name: Update product data from Amazon API
+      - name: Update product data from Amazon
         id: update
         run: |
           set -o pipefail
           npx tsx src/scripts/update-products.ts 2>&1 | tee /tmp/update-output.txt
         env:
-          AMAZON_ACCESS_KEY: ${{ secrets.AMAZON_ACCESS_KEY }}
-          AMAZON_SECRET_KEY: ${{ secrets.AMAZON_SECRET_KEY }}
           AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
-          AMAZON_HOST: webservices.amazon.co.jp
-          AMAZON_REGION: us-west-2
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 

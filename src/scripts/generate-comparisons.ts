@@ -126,7 +126,7 @@ async function generateComparisonArticles() {
           faq_content: (result.faq as Array<{ question: string; answer: string }>) ?? [],
           meta_title: title,
           meta_description: (result.metaDescription as string) ?? null,
-          ai_model_used: "gpt-4o-mini",
+          ai_model_used: "claude-haiku-4-5-20251001",
           ai_prompt_version: "v1",
           ai_generated_at: new Date().toISOString(),
           status: "draft", // Requires manual review

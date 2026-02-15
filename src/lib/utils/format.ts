@@ -36,3 +36,11 @@ export function formatRelativeTime(dateStr: string): string {
   const diffMonths = Math.floor(diffDays / 30);
   return `${diffMonths}ヶ月前`;
 }
+
+/**
+ * Convert Amazon rating (0-5) to a score (0-10).
+ */
+export function calculateScore(rating: number | null | undefined): number | null {
+  if (rating == null) return null;
+  return Math.round(rating * 2 * 10) / 10;
+}

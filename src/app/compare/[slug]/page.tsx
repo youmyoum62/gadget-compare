@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getComparisonBySlug, getComparisonProducts, getPublishedComparisons } from "@/lib/supabase/queries";
 import { ComparisonTable } from "@/components/comparison/ComparisonTable";
-import { AffiliateDisclosure } from "@/components/seo/AffiliateDisclosure";
+import { PageFooter } from "@/components/layout/PageFooter";
 import { JsonLd, buildFaqSchema, buildBreadcrumbSchema } from "@/components/seo/JsonLd";
 import { SITE_URL } from "@/lib/utils/constants";
 
@@ -55,32 +55,38 @@ export default async function ComparisonPage({
         ])}
       />
 
-      <article className="space-y-8">
-        <header>
-          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
+      <article className="space-y-8 pb-8">
+        {/* Header */}
+        <header className="space-y-3">
+          <h1 className="font-display text-3xl font-bold leading-tight text-foreground md:text-4xl">
             {comparison.title}
           </h1>
           {comparison.published_at && (
-            <p className="mt-2 text-sm text-gray-500">
-              {new Date(comparison.published_at).toLocaleDateString("ja-JP")} 公開
-            </p>
+            <div className="flex items-center gap-2 text-sm text-foreground-muted">
+              <span className="material-icons-outlined text-base">event</span>
+              <time dateTime={comparison.published_at}>
+                {new Date(comparison.published_at).toLocaleDateString("ja-JP", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </time>
+            </div>
           )}
         </header>
-
-        <AffiliateDisclosure variant="inline" />
 
         {/* Introduction */}
         {comparison.introduction && (
           <div
-            className="prose max-w-none text-gray-700"
+            className="prose prose-sm max-w-none text-foreground prose-headings:font-display prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground sm:prose-base"
             dangerouslySetInnerHTML={{ __html: comparison.introduction }}
           />
         )}
 
         {/* Comparison Table */}
         {products.length > 0 && (
-          <section>
-            <h2 className="mb-4 text-xl font-bold text-gray-900">
+          <section className="space-y-4">
+            <h2 className="font-display text-2xl font-bold text-foreground">
               比較表
             </h2>
             <ComparisonTable products={products} />
@@ -90,17 +96,24 @@ export default async function ComparisonPage({
         {/* Body Content */}
         {comparison.body_content && (
           <div
-            className="prose max-w-none text-gray-700"
+            className="prose prose-sm max-w-none text-foreground prose-headings:font-display prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground sm:prose-base"
             dangerouslySetInnerHTML={{ __html: comparison.body_content }}
           />
         )}
 
         {/* Conclusion */}
         {comparison.conclusion && (
-          <section className="rounded-lg bg-blue-50 p-6">
-            <h2 className="mb-3 text-xl font-bold text-gray-900">まとめ</h2>
+          <section className="space-y-4 rounded-2xl bg-primary-soft p-6 md:p-8">
+            <div className="flex items-center gap-2">
+              <span className="material-icons-outlined text-primary">
+                check_circle
+              </span>
+              <h2 className="font-display text-2xl font-bold text-foreground">
+                まとめ
+              </h2>
+            </div>
             <div
-              className="prose max-w-none text-gray-700"
+              className="prose prose-sm max-w-none text-foreground prose-headings:font-display prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground sm:prose-base"
               dangerouslySetInnerHTML={{ __html: comparison.conclusion }}
             />
           </section>
@@ -108,26 +121,38 @@ export default async function ComparisonPage({
 
         {/* FAQ */}
         {faqs.length > 0 && (
-          <section>
-            <h2 className="mb-4 text-xl font-bold text-gray-900">
-              よくある質問
-            </h2>
-            <div className="space-y-4">
+          <section className="space-y-5">
+            <div className="flex items-center gap-2">
+              <span className="material-icons-outlined text-primary">
+                help_outline
+              </span>
+              <h2 className="font-display text-2xl font-bold text-foreground">
+                よくある質問
+              </h2>
+            </div>
+            <div className="space-y-3">
               {faqs.map((faq, i) => (
                 <details
                   key={i}
-                  className="rounded-lg border border-gray-200 p-4"
+                  className="group rounded-2xl border border-border bg-white p-5 transition-all hover:border-primary/30 hover:shadow-sm"
                 >
-                  <summary className="cursor-pointer font-semibold text-gray-900">
-                    {faq.question}
+                  <summary className="flex cursor-pointer items-start gap-3 font-display font-semibold text-foreground">
+                    <span className="material-icons-outlined mt-0.5 text-primary transition-transform group-open:rotate-90">
+                      chevron_right
+                    </span>
+                    <span className="flex-1">{faq.question}</span>
                   </summary>
-                  <p className="mt-2 text-gray-700">{faq.answer}</p>
+                  <p className="ml-8 mt-3 leading-relaxed text-foreground-muted">
+                    {faq.answer}
+                  </p>
                 </details>
               ))}
             </div>
           </section>
         )}
       </article>
+
+      <PageFooter />
     </>
   );
 }

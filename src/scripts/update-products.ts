@@ -3,14 +3,14 @@
  * Run by GitHub Actions: .github/workflows/update-products.yml
  *
  * 1. Reads all active products from Supabase
- * 2. Fetches latest data from Amazon PA-API (batched, rate-limited)
+ * 2. Fetches latest data by scraping Amazon.co.jp (rate-limited)
  * 3. Updates product data in Supabase
  * 4. Logs price changes to price_history
  * 5. Records sync status to sync_log
  */
 
 import { createClient } from "@supabase/supabase-js";
-import { PaApiClient } from "../lib/amazon/paapi";
+import { ScraperClient } from "../lib/amazon/scraper";
 import type { AmazonProduct } from "../lib/amazon/types";
 
 const supabase = createClient(
@@ -50,33 +50,20 @@ async function main() {
       return;
     }
 
-    const amazon = new PaApiClient();
+    const scraper = new ScraperClient();
+    const asins = products.map((p) => p.asin);
 
-    // Batch ASINs in groups of 10 (PA-API max per request)
-    const batches: string[][] = [];
-    for (let i = 0; i < products.length; i += 10) {
-      batches.push(products.slice(i, i + 10).map((p) => p.asin));
-    }
+    console.log(`Fetching ${asins.length} products via scraping...`);
+    const amazonProducts = await scraper.getItems(asins);
 
-    for (const batch of batches) {
+    for (const ap of amazonProducts) {
       try {
-        console.log(`Fetching batch: ${batch.join(", ")}`);
-        const amazonProducts = await amazon.getItems(batch);
-
-        for (const ap of amazonProducts) {
-          try {
-            await updateProduct(ap, products);
-            processedCount++;
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : String(err);
-            console.error(`Error updating ${ap.asin}: ${msg}`);
-            errors.push({ asin: ap.asin, error: msg });
-          }
-        }
+        await updateProduct(ap, products);
+        processedCount++;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error(`Batch failed: ${msg}`);
-        errors.push({ batch, error: msg });
+        console.error(`Error updating ${ap.asin}: ${msg}`);
+        errors.push({ asin: ap.asin, error: msg });
       }
     }
 
@@ -103,15 +90,17 @@ async function updateProduct(
   const product = products.find((p) => p.asin === ap.asin);
   if (!product) return;
 
-  const partnerTag = process.env.AMAZON_PARTNER_TAG!;
-  const affiliateUrl = `${ap.detailPageUrl}?tag=${partnerTag}`;
+  const partnerTag = process.env.AMAZON_PARTNER_TAG;
+  const affiliateUrl = partnerTag
+    ? `${ap.detailPageUrl}?tag=${partnerTag}`
+    : ap.detailPageUrl;
 
   await supabase
     .from("products")
     .update({
       title: ap.title,
-      brand: ap.brand,
-      manufacturer: ap.manufacturer,
+      brand: ap.brand ?? null,
+      manufacturer: ap.manufacturer ?? null,
       price_amount: ap.price?.amount ?? null,
       price_currency: ap.price?.currency ?? "JPY",
       list_price_amount: ap.listPrice?.amount ?? null,

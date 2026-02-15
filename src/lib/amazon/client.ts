@@ -1,13 +1,12 @@
 import type { AmazonApiClient } from "./types";
-import { PaApiClient } from "./paapi";
+import { ScraperClient } from "./scraper";
 
 /**
- * Factory function to get the Amazon API client.
- * Currently returns PA-API 5.0 client.
- * Will be updated to return Creators API client before April 2026 deadline.
+ * Factory function to get the Amazon product data client.
+ * Returns a ScraperClient that fetches data directly from Amazon.co.jp pages.
  */
 export function getAmazonClient(): AmazonApiClient {
-  return new PaApiClient();
+  return new ScraperClient();
 }
 
 export type { AmazonApiClient, AmazonProduct, SearchItemsParams } from "./types";

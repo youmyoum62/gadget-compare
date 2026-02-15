@@ -11,3 +11,24 @@ export const AMAZON_AFFILIATE_DISCLAIMER_EN =
 
 export const AMAZON_TRADEMARK_NOTICE =
   "Amazon、Amazon.co.jpおよびそれらのロゴはAmazon.com, Inc.またはその関連会社の商標です。";
+
+export const NAV_ITEMS = [
+  { href: "/", icon: "home", label: "ホーム" },
+  { href: "/rankings", icon: "emoji_events", label: "ランキング" },
+  { href: "/search", icon: "search", label: "検索", isFab: true },
+  { href: "/compare", icon: "compare_arrows", label: "比較" },
+  { href: "/categories", icon: "category", label: "カテゴリ" },
+] as const;
+
+export const CATEGORY_ICONS: Record<string, string> = {
+  smartphone: "smartphone",
+  earphone: "headphones",
+  headphone: "headphones",
+  charger: "battery_charging_full",
+  tablet: "tablet_mac",
+  laptop: "laptop_mac",
+  camera: "photo_camera",
+  audio: "headphones",
+  wearable: "watch",
+  default: "devices",
+};

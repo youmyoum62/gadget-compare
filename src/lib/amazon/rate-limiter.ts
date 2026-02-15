@@ -24,4 +24,5 @@ class RateLimiter {
   }
 }
 
-export const amazonRateLimiter = new RateLimiter(1);
+// 3-second interval for web scraping (1/3 requests per second)
+export const amazonRateLimiter = new RateLimiter(1 / 3);
