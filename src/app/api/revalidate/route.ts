@@ -47,10 +47,19 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get("secret");
 
-  if (!secret || secret !== process.env.REVALIDATION_SECRET) {
+  // Debug info
+  const envSecret = process.env.REVALIDATION_SECRET;
+
+  if (!secret || secret !== envSecret) {
     return NextResponse.json({
       error: "Invalid secret",
-      usage: "GET /api/revalidate?secret=YOUR_SECRET&path=/products"
+      usage: "GET /api/revalidate?secret=YOUR_SECRET&path=/products",
+      debug: {
+        hasEnvSecret: !!envSecret,
+        envSecretLength: envSecret?.length || 0,
+        receivedSecretLength: secret?.length || 0,
+        secretsMatch: secret === envSecret,
+      }
     }, { status: 401 });
   }
 
