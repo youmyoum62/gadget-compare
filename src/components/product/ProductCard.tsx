@@ -54,10 +54,23 @@ export function ProductCard({ product, variant = "grid" }: ProductCardProps) {
               {product.ai_verdict}
             </p>
           )}
-          <button className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/20 py-3.5 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:bg-white/30">
-            Read Full Review
-            <span className="material-icons-outlined text-sm">arrow_forward</span>
-          </button>
+          <div className="flex gap-3">
+            <a
+              href={product.affiliate_url}
+              target="_blank"
+              rel="nofollow sponsored noopener"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:scale-[1.02] hover:bg-primary-dark"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`${product.title} - Amazonで詳細を見る`}
+            >
+              <span className="material-icons-outlined text-base">shopping_cart</span>
+              Amazonで見る
+            </a>
+            <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/20 py-3.5 text-sm font-semibold text-white shadow-sm backdrop-blur-md transition-all hover:bg-white/30">
+              Read Full Review
+              <span className="material-icons-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
         </div>
       </Link>
     );
@@ -135,13 +148,26 @@ export function ProductCard({ product, variant = "grid" }: ProductCardProps) {
           </p>
         )}
 
-        <div className="mt-auto flex gap-3">
-          <button className="flex-1 rounded-xl border-2 border-primary/10 bg-white py-2.5 text-sm font-semibold text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-white">
-            Read Review
-          </button>
-          <button className="rounded-xl border-2 border-border px-3.5 py-2.5 text-foreground-muted transition-all hover:border-primary/30 hover:bg-primary-soft hover:text-primary">
-            <span className="material-icons-outlined text-xl">bookmark_border</span>
-          </button>
+        <div className="mt-auto flex flex-col gap-3">
+          <a
+            href={product.affiliate_url}
+            target="_blank"
+            rel="nofollow sponsored noopener"
+            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/30 transition-all hover:scale-[1.02] hover:bg-primary-dark hover:shadow-md hover:shadow-primary/40"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`${product.title} - Amazonで詳細を見る`}
+          >
+            <span className="material-icons-outlined text-base">shopping_cart</span>
+            Amazonで見る
+          </a>
+          <div className="flex gap-3">
+            <button className="flex-1 rounded-xl border-2 border-primary/10 bg-white py-2.5 text-sm font-semibold text-primary transition-all duration-300 hover:border-primary hover:bg-primary hover:text-white">
+              Read Review
+            </button>
+            <button className="rounded-xl border-2 border-border px-3.5 py-2.5 text-foreground-muted transition-all hover:border-primary/30 hover:bg-primary-soft hover:text-primary">
+              <span className="material-icons-outlined text-xl">bookmark_border</span>
+            </button>
+          </div>
         </div>
       </div>
     </Link>
