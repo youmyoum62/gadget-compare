@@ -10,8 +10,10 @@ Next.js 16のISR (Incremental Static Regeneration) が24時間キャッシュし
 
 #### ステップ1: Vercelに環境変数を設定
 
-1. https://vercel.com/youmyoum62/gadget-compare/settings/environment-variables を開く
-2. 「Add」をクリック
+1. https://vercel.com にアクセス
+2. ダッシュボードから「gadget-compare」プロジェクトを選択
+3. 上部メニューの「Settings」→ 左サイドバーの「Environment Variables」をクリック
+4. 「Add New」をクリック
 3. 以下を入力:
    ```
    Name: REVALIDATION_SECRET
@@ -60,12 +62,13 @@ curl "https://gadget-compare.vercel.app/api/revalidate?secret=y2B1YoTQTbnUON9oAH
 
 #### オプションA: キャッシュなしで再デプロイ
 
-1. https://vercel.com/youmyoum62/gadget-compare を開く
-2. 最新のデプロイをクリック
-3. 右上の3点メニュー → **"Redeploy"**
-4. **"Use existing Build Cache"のチェックを外す** ← 重要!
-5. "Redeploy"をクリック
-6. 約3-5分待つ
+1. https://vercel.com にアクセスして「gadget-compare」プロジェクトを開く
+2. 上部メニューの「Deployments」をクリック
+3. 最新のデプロイをクリック
+4. 右上の3点メニュー → **"Redeploy"**
+5. **"Use existing Build Cache"のチェックを外す** ← 重要!
+6. "Redeploy"をクリック
+7. 約3-5分待つ
 
 #### オプションB: コミットで再デプロイ
 

@@ -10,7 +10,10 @@
 ### ステップ1: Vercel環境変数を設定 (2分)
 
 1. **Vercelにログイン**
-   - https://vercel.com/youmyoum62/gadget-compare/settings/environment-variables
+   - https://vercel.com にアクセス
+   - wsufc2001@gmail.com でログイン済みであることを確認
+   - ダッシュボードから「gadget-compare」プロジェクトを選択
+   - 上部メニューの「Settings」→ 左サイドバーの「Environment Variables」をクリック
 
 2. **環境変数を追加**
    - 「Add New」をクリック
@@ -30,12 +33,13 @@
 
 #### 方法A: Vercelダッシュボードから (簡単)
 
-1. https://vercel.com/youmyoum62/gadget-compare
-2. 一番上のデプロイをクリック
-3. 右上の3点メニュー (︙) → **"Redeploy"**
-4. ✅ **"Use existing Build Cache" のチェックを外す** ← 超重要!
-5. 「Redeploy」をクリック
-6. 約3-5分待つ
+1. https://vercel.com にアクセスして「gadget-compare」プロジェクトを開く
+2. 上部メニューの「Deployments」をクリック
+3. 一番上のデプロイをクリック
+4. 右上の3点メニュー (︙) → **"Redeploy"**
+5. ✅ **"Use existing Build Cache" のチェックを外す** ← 超重要!
+6. 「Redeploy」をクリック
+7. 約3-5分待つ
 
 #### 方法B: コマンドラインから (高速)
 
