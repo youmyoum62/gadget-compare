@@ -31,7 +31,7 @@ export default async function HomePage() {
 
       {categories.length > 0 && (
         <section>
-          <CategoryTabs categories={categories} />
+          <CategoryTabs categories={categories} basePath="/products" />
         </section>
       )}
 
