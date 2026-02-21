@@ -62,9 +62,15 @@ function getGeminiClient(): GoogleGenerativeAI {
   return genAIInstance;
 }
 
+// Models to try in order. Each has 20 RPD free tier.
+// By rotating, we get 40 RPD total.
+const MODELS = ["gemini-2.5-flash-lite", "gemini-2.5-flash"] as const;
+let currentModelIndex = 0;
+
 /**
  * Generate structured JSON content using AI.
- * Uses Google Gemini 2.5 Flash (free tier: 5 RPM / 20 RPD).
+ * Uses Gemini models with automatic fallback on rate limit (429).
+ * Rotates between gemini-2.5-flash-lite and gemini-2.5-flash (40 RPD combined).
  */
 export async function generateContent(
   systemPrompt: string,
@@ -72,20 +78,39 @@ export async function generateContent(
   options?: { maxTokens?: number }
 ): Promise<Record<string, unknown>> {
   const genAI = getGeminiClient();
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction: systemPrompt,
-  });
 
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
-    generationConfig: {
-      maxOutputTokens: options?.maxTokens ?? 2000,
-    },
-  });
+  for (let attempt = 0; attempt < MODELS.length; attempt++) {
+    const modelName = MODELS[(currentModelIndex + attempt) % MODELS.length];
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: systemPrompt,
+      });
 
-  const text = result.response.text();
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        generationConfig: {
+          maxOutputTokens: options?.maxTokens ?? 2000,
+        },
+      });
 
-  // Extract JSON from the response using multiple strategies
-  return extractJson(text);
+      const text = result.response.text();
+      return extractJson(text);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("429") && attempt < MODELS.length - 1) {
+        // Rate limited — try next model
+        currentModelIndex = (currentModelIndex + attempt + 1) % MODELS.length;
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw new Error("All models exhausted (rate limited)");
+}
+
+/** Get the name of the model currently being used. */
+export function getCurrentModel(): string {
+  return MODELS[currentModelIndex];
 }

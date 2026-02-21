@@ -15,7 +15,7 @@ import * as path from "path";
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), override: true });
 
 import { createClient } from "@supabase/supabase-js";
-import { generateContent } from "../lib/ai/client";
+import { generateContent, getCurrentModel } from "../lib/ai/client";
 import {
   buildProductSummaryPrompt,
   buildProductDetailReportPrompt,
@@ -26,10 +26,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const BATCH_SIZE = 10;
-// 5 RPM free tier limit → wait 13s between each API call to stay safe
-const DELAY_MS = 13000;
-const AI_MODEL = "gemini-2.5-flash";
+// 40 RPD combined (20 per model × 2 models) / 2 calls per product = 20 products
+const BATCH_SIZE = 20;
+// Wait 3s between API calls to respect RPM limits
+const DELAY_MS = 3000;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -184,7 +184,7 @@ async function main() {
               meta_title: (reportResult.meta_title as string) ?? null,
               meta_description:
                 (reportResult.meta_description as string) ?? null,
-              ai_model_used: AI_MODEL,
+              ai_model_used: getCurrentModel(),
               ai_prompt_version: "v1",
               ai_generated_at: new Date().toISOString(),
               status: "published",

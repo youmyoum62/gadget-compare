@@ -1,9 +1,9 @@
-name: Weekly AI Content Generation
+name: Daily AI Content Generation
 
 on:
   schedule:
-    # Run every Sunday at 5:00 AM JST (20:00 UTC Saturday)
-    - cron: '0 20 * * 6'
+    # Run daily at 5:00 AM JST (20:00 UTC previous day)
+    - cron: '0 20 * * *'
   workflow_dispatch: # Allow manual trigger (also used by chain trigger from update-products)
 
 concurrency:
