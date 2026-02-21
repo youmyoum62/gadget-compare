@@ -168,10 +168,7 @@ export async function getProductReport(
   productId: string
 ): Promise<ProductReport | null> {
   const supabase = getSupabase();
-  if (!supabase) {
-    console.log("[getProductReport] supabase client is null");
-    return null;
-  }
+  if (!supabase) return null;
 
   const { data, error } = await supabase
     .from("product_reports")
@@ -180,12 +177,6 @@ export async function getProductReport(
     .eq("status", "published")
     .single();
 
-  if (error) {
-    console.log(`[getProductReport] product_id=${productId} error: ${error.code} ${error.message}`);
-    if (error.code !== "PGRST116") throw error;
-  } else {
-    console.log(`[getProductReport] product_id=${productId} found report id=${data?.id}`);
-  }
-
+  if (error && error.code !== "PGRST116") throw error;
   return data as ProductReport | null;
 }
