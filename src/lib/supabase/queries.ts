@@ -1,5 +1,5 @@
 import { getSupabase } from "./client";
-import type { Product, Category, Comparison } from "@/types/database";
+import type { Product, Category, Comparison, ProductReport } from "@/types/database";
 
 export async function getActiveProducts(): Promise<Product[]> {
   const supabase = getSupabase();
@@ -162,4 +162,30 @@ export async function getComparisonProducts(
   return ((data as Product[]) ?? []).sort(
     (a, b) => (rankMap.get(a.id) ?? 99) - (rankMap.get(b.id) ?? 99)
   );
+}
+
+export async function getProductReport(
+  productId: string
+): Promise<ProductReport | null> {
+  const supabase = getSupabase();
+  if (!supabase) {
+    console.log("[getProductReport] supabase client is null");
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("product_reports")
+    .select("*")
+    .eq("product_id", productId)
+    .eq("status", "published")
+    .single();
+
+  if (error) {
+    console.log(`[getProductReport] product_id=${productId} error: ${error.code} ${error.message}`);
+    if (error.code !== "PGRST116") throw error;
+  } else {
+    console.log(`[getProductReport] product_id=${productId} found report id=${data?.id}`);
+  }
+
+  return data as ProductReport | null;
 }

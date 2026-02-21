@@ -91,6 +91,46 @@ export interface SyncLog {
   metadata: Record<string, unknown>;
 }
 
+export interface ProductReport {
+  id: string;
+  product_id: string;
+  specs_analysis: string | null;
+  merit_details: Array<{ title: string; description: string }> | null;
+  demerit_details: Array<{ title: string; description: string }> | null;
+  competitive_comparison: string | null;
+  recommended_users: string | null;
+  verdict: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  ai_model_used: string | null;
+  ai_prompt_version: string | null;
+  ai_generated_at: string | null;
+  status: "draft" | "published" | "archived";
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface XPost {
+  id: string;
+  product_id: string | null;
+  comparison_id: string | null;
+  post_type: "product_highlight" | "review_thread" | "comparison" | "deal_alert";
+  tweet_text: string;
+  thread_texts: string[] | null;
+  image_url: string | null;
+  affiliate_url: string | null;
+  tweet_id: string | null;
+  thread_ids: string[] | null;
+  status: "pending" | "posted" | "failed" | "skipped";
+  error_message: string | null;
+  scheduled_for: string | null;
+  posted_at: string | null;
+  ai_model_used: string | null;
+  ai_generated_at: string | null;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -100,6 +140,8 @@ export interface Database {
       comparison_products: { Row: ComparisonProduct; Insert: ComparisonProduct; Update: Partial<ComparisonProduct> };
       price_history: { Row: PriceHistory; Insert: Omit<PriceHistory, "id" | "recorded_at">; Update: Partial<PriceHistory> };
       sync_log: { Row: SyncLog; Insert: Partial<SyncLog> & Pick<SyncLog, "sync_type" | "status">; Update: Partial<SyncLog> };
+      product_reports: { Row: ProductReport; Insert: Partial<ProductReport> & Pick<ProductReport, "product_id">; Update: Partial<ProductReport> };
+      x_posts: { Row: XPost; Insert: Partial<XPost> & Pick<XPost, "post_type" | "tweet_text">; Update: Partial<XPost> };
     };
   };
 }

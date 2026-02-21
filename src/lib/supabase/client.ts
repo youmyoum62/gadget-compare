@@ -8,7 +8,12 @@ let _supabase: SupabaseClient | null = null;
 export function getSupabase(): SupabaseClient | null {
   if (!supabaseUrl || !supabaseAnonKey) return null;
   if (!_supabase) {
-    _supabase = createClient(supabaseUrl, supabaseAnonKey);
+    _supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        fetch: (input, init) =>
+          fetch(input, { ...init, cache: "no-store" as RequestCache }),
+      },
+    });
   }
   return _supabase;
 }

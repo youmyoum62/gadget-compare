@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getProductBySlug, getActiveProducts } from "@/lib/supabase/queries";
+import { getProductBySlug, getActiveProducts, getProductReport } from "@/lib/supabase/queries";
 import { AmazonButton } from "@/components/product/AmazonButton";
 import { StarRating } from "@/components/ui/StarRating";
 import { ScoreBadge } from "@/components/ui/ScoreBadge";
 import { ProductSpecs } from "@/components/product/ProductSpecs";
+import { ProductReport } from "@/components/product/ProductReport";
 import { JsonLd, buildProductSchema, buildBreadcrumbSchema } from "@/components/seo/JsonLd";
 import { SITE_URL } from "@/lib/utils/constants";
 import { formatPrice } from "@/lib/utils/format";
@@ -26,9 +27,12 @@ export async function generateMetadata({
   const product = await getProductBySlug(slug);
   if (!product) return { title: "商品が見つかりません" };
 
+  const report = await getProductReport(product.id).catch(() => null);
+
   return {
-    title: product.title,
+    title: report?.meta_title ?? product.title,
     description:
+      report?.meta_description ??
       product.ai_summary?.slice(0, 155) ??
       `${product.title}の価格、レビュー、スペック情報`,
     openGraph: {
@@ -50,6 +54,8 @@ export default async function ProductPage({
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) notFound();
+
+  const report = await getProductReport(product.id).catch(() => null);
 
   return (
     <>
@@ -173,6 +179,12 @@ export default async function ProductPage({
                 </ul>
               </div>
             )}
+          </div>
+        )}
+
+        {report && (
+          <div className="mb-10">
+            <ProductReport report={report} />
           </div>
         )}
 
