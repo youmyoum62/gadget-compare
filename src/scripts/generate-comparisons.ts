@@ -2,13 +2,17 @@
  * Weekly AI content generation script.
  * Run by GitHub Actions: .github/workflows/generate-content.yml
  *
- * 1. Generates AI summaries for products missing them
- * 2. Generates comparison articles for categories with enough products
+ * Generates comparison articles for categories with 3+ products.
+ * Note: AI summaries are now handled by generate-product-reports.ts (Step 1).
  */
+
+import * as dotenv from "dotenv";
+import * as path from "path";
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), override: true });
 
 import { createClient } from "@supabase/supabase-js";
 import { generateContent } from "../lib/ai/client";
-import { buildProductSummaryPrompt, buildComparisonArticlePrompt } from "../lib/ai/prompts";
+import { buildComparisonArticlePrompt } from "../lib/ai/prompts";
 import { generateSlug } from "../lib/utils/slug";
 
 const supabase = createClient(
@@ -17,57 +21,11 @@ const supabase = createClient(
 );
 
 async function main() {
-  console.log("Starting AI content generation...");
+  console.log("Starting comparison article generation...");
 
-  await generateProductSummaries();
   await generateComparisonArticles();
 
-  console.log("Content generation complete.");
-}
-
-async function generateProductSummaries() {
-  // Find products without AI summary
-  const { data: products } = await supabase
-    .from("products")
-    .select("*")
-    .eq("is_active", true)
-    .is("ai_summary", null);
-
-  if (!products?.length) {
-    console.log("All products already have AI summaries.");
-    return;
-  }
-
-  console.log(`Generating summaries for ${products.length} products...`);
-
-  for (const product of products) {
-    try {
-      console.log(`  Generating summary for: ${product.title}`);
-
-      const result = await generateContent(
-        "あなたはガジェット専門のレビュアーです。必ず有効なJSONで回答してください。",
-        buildProductSummaryPrompt(product)
-      );
-
-      await supabase
-        .from("products")
-        .update({
-          ai_summary: (result.summary as string) ?? null,
-          ai_pros: (result.pros as string[]) ?? null,
-          ai_cons: (result.cons as string[]) ?? null,
-          ai_verdict: (result.verdict as string) ?? null,
-          ai_content_generated_at: new Date().toISOString(),
-        })
-        .eq("id", product.id);
-
-      console.log(`  Done: ${product.title}`);
-    } catch (err) {
-      console.error(
-        `  Error generating summary for ${product.title}:`,
-        err instanceof Error ? err.message : err
-      );
-    }
-  }
+  console.log("Comparison article generation complete.");
 }
 
 async function generateComparisonArticles() {
@@ -126,7 +84,7 @@ async function generateComparisonArticles() {
           faq_content: (result.faq as Array<{ question: string; answer: string }>) ?? [],
           meta_title: title,
           meta_description: (result.metaDescription as string) ?? null,
-          ai_model_used: "claude-haiku-4-5-20251001",
+          ai_model_used: "gemini-2.5-flash",
           ai_prompt_version: "v1",
           ai_generated_at: new Date().toISOString(),
           status: "draft", // Requires manual review
