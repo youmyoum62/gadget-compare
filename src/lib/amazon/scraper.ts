@@ -80,9 +80,18 @@ export class ScraperClient implements AmazonApiClient {
       imageUrls: this.extractImages($),
       rating: this.extractRating($),
       reviewCount: this.extractReviewCount($),
-      availability: undefined,
+      availability: this.extractAvailability($),
       features: this.extractFeatures($),
     };
+  }
+
+  private extractAvailability($: cheerio.CheerioAPI): string | undefined {
+    const avail =
+      $("#availability span").first().text().trim() ||
+      $("#outOfStock .a-color-price").first().text().trim();
+    if (!avail) return undefined;
+    // Normalize: "在庫あり。" → "在庫あり"
+    return avail.replace(/[。\s]+$/, "").trim() || undefined;
   }
 
   private extractBrand($: cheerio.CheerioAPI): string | undefined {
@@ -101,23 +110,29 @@ export class ScraperClient implements AmazonApiClient {
   private extractPrice(
     $: cheerio.CheerioAPI
   ): AmazonProduct["price"] | undefined {
-    // Try multiple selectors
+    // Scope to #centerCol (main product area) first to avoid picking up
+    // sponsored product prices or "customers also bought" section prices.
     const priceText =
-      $(".a-price .a-offscreen").first().text().trim() ||
+      $("#centerCol .a-price .a-offscreen").first().text().trim() ||
+      $("#centerCol .a-price-whole").first().text().trim() ||
+      $("#corePriceDisplay_desktop_feature_div .a-price .a-offscreen").first().text().trim() ||
+      $("#corePrice_feature_div .a-price .a-offscreen").first().text().trim() ||
+      $("#apex_offerDisplay_desktop .a-price .a-offscreen").first().text().trim() ||
+      $("#price_inside_buybox").text().trim() ||
       $("#priceblock_ourprice").text().trim() ||
-      $(".a-price-whole").first().text().trim();
+      $("#priceblock_dealprice").text().trim();
 
     if (!priceText) return undefined;
 
     // Parse "￥12,345" or "¥12,345" or "12,345"
     const cleaned = priceText.replace(/[^\d]/g, "");
     const amount = parseInt(cleaned, 10);
-    if (isNaN(amount)) return undefined;
+    if (isNaN(amount) || amount === 0) return undefined;
 
     return {
       amount,
       currency: "JPY",
-      displayAmount: priceText,
+      displayAmount: `¥${amount.toLocaleString()}`,
     };
   }
 

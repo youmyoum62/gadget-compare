@@ -9,6 +9,10 @@
  * 5. Records sync status to sync_log
  */
 
+import * as dotenv from "dotenv";
+import * as path from "path";
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local"), override: true });
+
 import { createClient } from "@supabase/supabase-js";
 import { ScraperClient } from "../lib/amazon/scraper";
 import type { AmazonProduct } from "../lib/amazon/types";
