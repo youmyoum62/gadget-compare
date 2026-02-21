@@ -1,0 +1,60 @@
+name: Daily X Content Generation
+
+on:
+  schedule:
+    # Run at 12:00 JST (03:00 UTC)
+    - cron: '0 3 * * *'
+    # Run at 20:00 JST (11:00 UTC)
+    - cron: '0 11 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+# NOTE: Tweets are generated and saved to Supabase (x_posts table).
+# Manual posting required until X API Basic plan is activated.
+
+concurrency:
+  group: x-posting
+  cancel-in-progress: false
+
+jobs:
+  generate-content:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Generate tweet content
+        run: |
+          set -o pipefail
+          npx tsx src/scripts/generate-x-posts.ts 2>&1 | tee /tmp/generate-tweets.txt
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## X Content Generation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 📋 Generated tweets are saved to Supabase \`x_posts\` table with status \`pending\`." >> $GITHUB_STEP_SUMMARY
+          echo "> Post manually or run \`npx tsx src/scripts/show-pending-x-posts.ts\` to view." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/generate-tweets.txt ]; then
+            echo "<details><summary>generate-tweets.txt</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -30 /tmp/generate-tweets.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi

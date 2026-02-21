@@ -1,42 +1,46 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-let anthropicInstance: Anthropic | null = null;
+let genAIInstance: GoogleGenerativeAI | null = null;
 
-function getAnthropicClient(): Anthropic {
-  if (!anthropicInstance) {
-    anthropicInstance = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function getGeminiClient(): GoogleGenerativeAI {
+  if (!genAIInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "GEMINI_API_KEY is not configured. Set GEMINI_API_KEY in .env.local."
+      );
+    }
+    genAIInstance = new GoogleGenerativeAI(apiKey);
   }
-  return anthropicInstance;
+  return genAIInstance;
 }
 
 /**
  * Generate structured JSON content using AI.
- * Uses Claude Haiku 4.5 for cost efficiency.
+ * Uses Google Gemini 1.5 Flash (free tier: 1,500 requests/day).
  */
 export async function generateContent(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  options?: { maxTokens?: number }
 ): Promise<Record<string, unknown>> {
-  const client = getAnthropicClient();
-
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 2000,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
+  const genAI = getGeminiClient();
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.0-flash-lite",
+    systemInstruction: systemPrompt,
   });
 
-  const textBlock = response.content.find((block) => block.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("AI returned empty response");
-  }
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+    generationConfig: {
+      maxOutputTokens: options?.maxTokens ?? 2000,
+    },
+  });
 
-  // Extract JSON from the response text (may be wrapped in markdown code block)
-  const text = textBlock.text;
-  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [
-    null,
-    text,
-  ];
+  const text = result.response.text();
+
+  // Extract JSON from the response (may be wrapped in markdown code block)
+  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, text];
   const jsonStr = jsonMatch[1]!.trim();
 
   return JSON.parse(jsonStr);
