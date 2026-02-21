@@ -55,15 +55,10 @@ export default async function ProductPage({
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const report = await getProductReport(product.id).catch((err) => {
-    console.error("[ProductPage] getProductReport error:", err);
-    return null;
-  });
+  const report = await getProductReport(product.id).catch(() => null);
 
   return (
     <>
-      {/* Debug: remove after confirming report display */}
-      <div data-debug-report={report ? "found" : "null"} data-debug-product-id={product.id} style={{display:'none'}} />
       <JsonLd
         data={buildProductSchema({
           title: product.title,
